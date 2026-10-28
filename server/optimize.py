@@ -80,23 +80,29 @@ def main() -> None:
             if n % 6 == 0:
                 print(f"  {n}/{len(combos)} ({time.time() - t0:.0f} วินาที)", flush=True)
 
+    report_lines: list[str] = []
+
+    def say(line: str = "") -> None:
+        print(line, flush=True)
+        report_lines.append(line)
+
     for sym in symbols:
         rs = [r for r in rows if r["symbol"] == sym and r["train"]["trades"] >= args.min_trades]
         rs.sort(key=lambda r: r["train"]["total_r"], reverse=True)
-        print(f"\n=== {sym}: 10 ชุดที่ดีที่สุดในครึ่งแรก แล้วดูว่าครึ่งหลังรอดไหม ===")
-        print(f"{'กฎ':42} | {'ครึ่งแรก (train)':26} | {'ครึ่งหลัง (test)':26}")
+        say(f"\n=== {sym}: 10 ชุดที่ดีที่สุดในครึ่งแรก แล้วดูว่าครึ่งหลังรอดไหม ===")
+        say(f"{'กฎ':42} | {'ครึ่งแรก (train)':26} | {'ครึ่งหลัง (test)':26}")
         for r in rs[:10]:
             a, b = r["train"], r["test"]
             ok = "✓" if b["trades"] >= 10 and b["total_r"] > 0 and b["profit_factor"] > 1.1 else " "
-            print(f"{r['rules']:42} | {a['trades']:3} ไม้ {a['win_rate']:4.0f}% {a['total_r']:+6.1f}R PF{a['profit_factor']:4.2f} "
+            say(f"{r['rules']:42} | {a['trades']:3} ไม้ {a['win_rate']:4.0f}% {a['total_r']:+6.1f}R PF{a['profit_factor']:4.2f} "
                   f"| {b['trades']:3} ไม้ {b['win_rate']:4.0f}% {b['total_r']:+6.1f}R PF{b['profit_factor']:4.2f} {ok}")
         good = [r for r in rs[:10] if r["test"]["trades"] >= 10 and r["test"]["total_r"] > 0
                 and r["test"]["profit_factor"] > 1.1]
         if good:
-            print("\nชุดที่ผ่านทั้งสองครึ่ง (✓) ตัวแรก ใส่ใน config.json ส่วน \"signals\" ได้แบบนี้:")
-            print(json.dumps({k: v for k, v in good[0]["cfg"].items()}, ensure_ascii=False))
+            say("\nชุดที่ผ่านทั้งสองครึ่ง (✓) ตัวแรก ใส่ใน config.json ส่วน \"signals\" ได้แบบนี้:")
+            say(json.dumps({k: v for k, v in good[0]["cfg"].items()}, ensure_ascii=False))
         else:
-            print("\nไม่มีชุดไหนผ่านครึ่งหลัง: ยังไม่ควรใช้กฎเหล่านี้เทรดจริง")
+            say("\nไม่มีชุดไหนผ่านครึ่งหลัง: ยังไม่ควรใช้กฎเหล่านี้เทรดจริง")
 
     out = ROOT / "optimize_results.csv"
     with open(out, "w", newline="", encoding="utf-8") as f:
@@ -108,8 +114,9 @@ def main() -> None:
             w.writerow([r["symbol"], r["rules"], a["trades"], round(a["win_rate"], 1), round(a["total_r"], 2),
                         round(a["profit_factor"], 2), b["trades"], round(b["win_rate"], 1),
                         round(b["total_r"], 2), round(b["profit_factor"], 2), json.dumps(r["cfg"])])
-    print(f"\nผลทุกชุดบันทึกที่ {out}")
-    print("หมายเหตุ: ยิ่งลองหลายชุด ยิ่งมีโอกาสเจอชุดที่ดีเพราะโชค ให้เชื่อเฉพาะผลครึ่งหลังและต้องทดสอบบน Demo ต่อ")
+    say(f"\nผลทุกชุดบันทึกที่ {out}")
+    say("หมายเหตุ: ยิ่งลองหลายชุด ยิ่งมีโอกาสเจอชุดที่ดีเพราะโชค ให้เชื่อเฉพาะผลครึ่งหลังและต้องทดสอบบน Demo ต่อ")
+    (ROOT / "optimize_report.txt").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
