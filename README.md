@@ -26,6 +26,13 @@
 
 ดูผลแล้วถ้า profit factor ต่ำกว่า 1 หรือครึ่งแรก/ครึ่งหลังต่างกันมาก แปลว่ากฎยังไม่พร้อมใช้เงินจริง
 
+## เทียบหลายชุดกฎ (optimize)
+ดับเบิลคลิก `optimize.bat` (เปิด MT5 ค้างไว้, ใช้เวลาประมาณ 10–20 นาที) ระบบจะทดสอบกฎ 54 แบบ:
+เข้า M15/M5 × โซน FVG/OB/ทั้งคู่ × TP liquidity/2R/3R × มี/ไม่มี liquidity sweep (SL ที่โซนหรือที่ไส้ sweep)
+- เลือกชุดที่ดีที่สุดจาก**ครึ่งแรก**ของข้อมูล แล้วดูผลใน**ครึ่งหลัง**ที่ไม่เคยเห็น ชุดที่ผ่านทั้งสองครึ่งจะมีเครื่องหมาย ✓
+- ผลสรุปอยู่ใน `optimize_report.txt` และทุกชุดอยู่ใน `optimize_results.csv`
+- ถ้ามีชุดที่ผ่าน ระบบจะพิมพ์ค่าที่ใส่ใน `"signals"` ของ config.json ให้ แต่ต้องทดสอบบน Demo ต่ออีกก่อน
+
 ## เปิดบอทเทรด (บัญชี Demo)
 ใน `config.json` ส่วน `"trading"`:
 ```json
@@ -93,7 +100,7 @@ python -m pytest
 - `server/datasource.py` ดึงแท่งเทียนจาก MT5 (หรือข้อมูลจำลอง)
 - `server/smc.py` คำนวณ swing, BOS/CHoCH, FVG, OB, premium/discount, kill zone
 - `server/app.py` เว็บเซิร์ฟเวอร์ + WebSocket ส่งข้อมูลทุก 1 วินาที
-- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง, `server/backtest.py` ทดสอบย้อนหลัง
+- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง, `server/backtest.py` ทดสอบย้อนหลัง, `server/optimize.py` เทียบหลายชุดกฎแบบ train/test
 - `web/` หน้ากราฟ (TradingView Lightweight Charts v4.1.3, Apache-2.0)
 
 > บอทเข้าออเดอร์เฉพาะบัญชี Demo จนกว่าจะผ่านการทดสอบ
