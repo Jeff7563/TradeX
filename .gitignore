@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 signals.csv
 signals_seen.json
+trades.csv
