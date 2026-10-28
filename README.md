@@ -16,6 +16,16 @@
 ตัวเลขปรับได้ในส่วน `"signals"` ของ `config.json` ทุกสัญญาณถูกบันทึกลง `signals.csv` เพื่อวัดความแม่นภายหลัง
 สัญญาณเป็นผลจากกฎอัตโนมัติ ใช้ประกอบการตัดสินใจเท่านั้น
 
+## ทดสอบย้อนหลัง (Backtest)
+เปิด MT5 ค้างไว้ แล้วดับเบิลคลิก `backtest.bat` ระบบจะดึงราคาจริงย้อนหลังประมาณ 1 ปี (M15) แล้วจำลองการเทรดตามกฎ
+- เข้าที่ราคาเปิดของแท่งถัดไป, ถ้าแท่งเดียวชนทั้ง SL และ TP นับเป็นแพ้, หักค่าสเปรดทุกไม้
+- ผลเป็นหน่วย **R** (1R = เงินที่เสี่ยงต่อไม้) เช่น +10R ที่เสี่ยง 0.5%/ไม้ ≈ +5%
+- รายงาน: win rate, กำไรรวม, profit factor, drawdown, แพ้ติดกัน, ผลครึ่งแรก/ครึ่งหลัง, ถ้าสเปรดกว้าง 2 เท่า, Monte Carlo, แยกตาม Kill zone และรายเดือน
+- ทุกไม้บันทึกใน `backtest_trades.csv` (เปิดด้วย Excel ได้)
+- ถ้าได้แท่งน้อยกว่าที่ขอ ให้เปิดกราฟ M15 ใน MT5 แล้วเลื่อนย้อนไปเรื่อยๆ ให้โหลดประวัติก่อน หรือเพิ่ม Tools → Options → Charts → Max bars in chart
+
+ดูผลแล้วถ้า profit factor ต่ำกว่า 1 หรือครึ่งแรก/ครึ่งหลังต่างกันมาก แปลว่ากฎยังไม่พร้อมใช้เงินจริง
+
 ## เปิดบอทเทรด (บัญชี Demo)
 ใน `config.json` ส่วน `"trading"`:
 ```json
@@ -83,7 +93,7 @@ python -m pytest
 - `server/datasource.py` ดึงแท่งเทียนจาก MT5 (หรือข้อมูลจำลอง)
 - `server/smc.py` คำนวณ swing, BOS/CHoCH, FVG, OB, premium/discount, kill zone
 - `server/app.py` เว็บเซิร์ฟเวอร์ + WebSocket ส่งข้อมูลทุก 1 วินาที
-- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง
+- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง, `server/backtest.py` ทดสอบย้อนหลัง
 - `web/` หน้ากราฟ (TradingView Lightweight Charts v4.1.3, Apache-2.0)
 
 > บอทเข้าออเดอร์เฉพาะบัญชี Demo จนกว่าจะผ่านการทดสอบ
