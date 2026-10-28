@@ -18,5 +18,16 @@
     "login": 0,
     "password": "",
     "server": ""
+  },
+  "signals": {
+    "entry_tf": "M15",
+    "min_rr": 2.0,
+    "max_bars_since_break": 24,
+    "require_kill_zone": true,
+    "scan_every_seconds": 30
+  },
+  "line": {
+    "channel_access_token": "",
+    "user_id": ""
   }
 }
