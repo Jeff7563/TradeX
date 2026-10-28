@@ -23,7 +23,7 @@ from datetime import datetime, timedelta, timezone
 
 from .datasource import TF_SECONDS, Candle
 from .signals import evaluate
-from .smc import kill_zones
+from .smc import analyse, kill_zones
 
 TH = timezone(timedelta(hours=7))
 
@@ -71,6 +71,8 @@ def run(symbol: str, d1: list[Candle], h1: list[Candle], ltf: list[Candle],
     per_day: dict[str, int] = defaultdict(int)
     busy_until = -1
     seen = set()
+    cache_h1: dict = {}
+    cache_d1: dict = {}
     for k in range(window, len(ltf) - 1):
         bar = ltf[k]
         if k <= busy_until:
@@ -82,10 +84,20 @@ def run(symbol: str, d1: list[Candle], h1: list[Candle], ltf: list[Candle],
         if per_day[day] >= max_per_day:
             continue
         t_close = bar.time + step
-        sig = evaluate(symbol,
-                       _closed_upto(d1, d1_t, 86400, t_close)[-200:],
-                       _closed_upto(h1, h1_t, 3600, t_close)[-window:],
-                       ltf[k - window:k + 1], scfg)
+        d1_c = _closed_upto(d1, d1_t, 86400, t_close)[-200:]
+        h1_c = _closed_upto(h1, h1_t, 3600, t_close)[-window:]
+        # H1/D1 only change once an hour/day: reuse their analysis
+        hk, dk = (h1_c[-1].time if h1_c else 0), (d1_c[-1].time if d1_c else 0)
+        if hk not in cache_h1:
+            cache_h1.clear()
+            cache_h1[hk] = analyse(h1_c, "H1") if len(h1_c) >= 30 else {"trend": "none"}
+        if dk not in cache_d1:
+            cache_d1.clear()
+            cache_d1[dk] = analyse(d1_c, "D1") if len(d1_c) >= 10 else {"trend": "none"}
+        if cache_h1[hk]["trend"] == "none":
+            continue
+        sig = evaluate(symbol, d1_c, h1_c, ltf[k - window:k + 1], scfg,
+                       a_d1=cache_d1[dk], a_h1=cache_h1[hk])
         if not sig or sig.key in seen:
             continue
         seen.add(sig.key)

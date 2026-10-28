@@ -7,3 +7,5 @@ signals.csv
 signals_seen.json
 trades.csv
 backtest_trades.csv
+optimize_results.csv
+optimize_report.txt
