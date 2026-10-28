@@ -61,6 +61,18 @@ class MT5Source:
                        float(r["high"]), float(r["low"]), float(r["close"]),
                        float(r["tick_volume"])) for r in rates]
 
+    def candles_range(self, symbol: str, tf: str, start: int, end: int) -> list[Candle]:
+        """Bars between two UTC epoch times (used to replay old signals)."""
+        from datetime import datetime, timezone
+        a = datetime.fromtimestamp(start + self.server_offset, timezone.utc)
+        b = datetime.fromtimestamp(end + self.server_offset, timezone.utc)
+        rates = self.mt5.copy_rates_range(self.symbols[symbol], self._tf[tf], a, b)
+        if rates is None:
+            return []
+        return [Candle(int(r["time"]) - self.server_offset, float(r["open"]),
+                       float(r["high"]), float(r["low"]), float(r["close"]),
+                       float(r["tick_volume"])) for r in rates]
+
     def tick(self, symbol: str) -> dict | None:
         t = self.mt5.symbol_info_tick(self.symbols[symbol])
         if t is None:
@@ -111,6 +123,20 @@ class SimSource:
             last.close, last.high, last.low = c, max(last.high, c), min(last.low, c)
         self._cache[key] = bars[-max(count, 1000):]
         return self._cache[key][-count:]
+
+    def candles_range(self, symbol: str, tf: str, start: int, end: int) -> list[Candle]:
+        step = TF_SECONDS[tf]
+        n = max(int((end - start) // step), 1)
+        rng = random.Random(f"{symbol}-{tf}-{start}")
+        price = self.BASE.get(symbol, 100.0)
+        out, t = [], start // step * step
+        for _ in range(n):
+            o = price
+            c = o + rng.gauss(0, price * 0.0004)
+            out.append(Candle(t, o, max(o, c) + abs(rng.gauss(0, price * 0.0002)),
+                              min(o, c) - abs(rng.gauss(0, price * 0.0002)), c))
+            price, t = c, t + step
+        return out
 
     def tick(self, symbol: str) -> dict | None:
         bars = self._cache.get((symbol, "M5")) or self.candles(symbol, "M5", 2)

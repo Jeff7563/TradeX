@@ -9,3 +9,5 @@ trades.csv
 backtest_trades.csv
 optimize_results.csv
 optimize_report.txt
+channel_report.txt
+channel_trades.csv
