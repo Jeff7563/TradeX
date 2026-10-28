@@ -1,0 +1,22 @@
+{
+  "source": "sim",
+  "symbols": {
+    "XAUUSD": "XAUUSDm",
+    "BTCUSD": "BTCUSDm"
+  },
+  "timeframes": [
+    "D1",
+    "H1",
+    "M15",
+    "M5"
+  ],
+  "timezone_offset_hours": 7,
+  "server_utc_offset_hours": 0,
+  "candles": 500,
+  "mt5": {
+    "path": "",
+    "login": 0,
+    "password": "",
+    "server": ""
+  }
+}

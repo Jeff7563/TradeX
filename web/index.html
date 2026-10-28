@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TradeX Chart</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <strong class="brand">TradeX</strong>
+    <div class="group" id="symbols"></div>
+    <div class="group" id="timeframes"></div>
+    <div class="group toggles">
+      <label><input type="checkbox" data-layer="structure" checked> BOS/CHoCH</label>
+      <label><input type="checkbox" data-layer="fvg" checked> FVG</label>
+      <label><input type="checkbox" data-layer="ob" checked> OB</label>
+      <label><input type="checkbox" data-layer="range" checked> Premium/Discount</label>
+      <label><input type="checkbox" data-layer="kz" checked> Kill zones</label>
+    </div>
+    <div class="status">
+      <span id="price">-</span>
+      <span id="trend" class="pill">-</span>
+      <span id="source" class="pill"></span>
+      <span id="conn" class="dot" title="connection"></span>
+    </div>
+  </header>
+  <main>
+    <div id="chart"></div>
+    <canvas id="overlay"></canvas>
+  </main>
+  <footer>เวลาไทย (UTC+7) · Kill zone: London 02:00–05:00 / New York 07:00–10:00 เวลานิวยอร์ก · Charts by <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView</a></footer>
+  <script src="/static/vendor/lightweight-charts.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
