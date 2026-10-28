@@ -13,11 +13,13 @@ import time
 from pathlib import Path
 
 from .app import CFG, ROOT, SOURCE
+from .executor import Executor
 from .notify import Notifier, format_signal
 from .signals import evaluate
 
 LOG = ROOT / "signals.csv"
 SEEN = ROOT / "signals_seen.json"
+TRADES = ROOT / "trades.csv"
 
 
 def log_signal(sig) -> None:
@@ -37,7 +39,7 @@ def load_seen() -> set:
         return set()
 
 
-def scan_once(notifier: Notifier, seen: set, scfg: dict) -> int:
+def scan_once(notifier: Notifier, seen: set, scfg: dict, executor: Executor | None = None) -> int:
     sent = 0
     tf = scfg.get("entry_tf", "M15")
     for sym in CFG["symbols"]:
@@ -56,6 +58,9 @@ def scan_once(notifier: Notifier, seen: set, scfg: dict) -> int:
             log_signal(sig)
             notifier.send(format_signal(sig, tf))
             sent += 1
+            if executor:
+                ok, msg = executor.place(sig)
+                notifier.send(("✅ " if ok else "⏸ ") + msg)
     return sent
 
 
@@ -78,10 +83,20 @@ def main() -> None:
           f"LINE={'on' if notifier.line_ready else 'off'}", flush=True)
     if SOURCE.name != "mt5":
         print("คำเตือน: ใช้ราคาจำลอง (sim) สัญญาณไม่ใช่ของจริง", flush=True)
+    executor = None
+    tcfg = CFG.get("trading", {})
+    if tcfg.get("enabled"):
+        if SOURCE.name != "mt5":
+            print("trading.enabled = true แต่ไม่ได้ต่อ MT5 จึงไม่เข้าออเดอร์", flush=True)
+        else:
+            executor = Executor(SOURCE.mt5, tcfg, CFG["symbols"], TRADES)
+            print(f"เทรดอัตโนมัติ: เปิด | เสี่ยง {executor.cfg['risk_percent']}% ต่อไม้ | "
+                  f"สูงสุด {executor.cfg['max_trades_per_day']} ไม้/วัน | "
+                  f"หยุดเมื่อขาดทุน {executor.cfg['daily_loss_limit_percent']}%/วัน", flush=True)
     seen = load_seen()
     every = int(scfg.get("scan_every_seconds", 30))
     while True:
-        scan_once(notifier, seen, scfg)
+        scan_once(notifier, seen, scfg, executor)
         if args.once:
             break
         time.sleep(every)

@@ -29,5 +29,14 @@
   "line": {
     "channel_access_token": "",
     "user_id": ""
+  },
+  "trading": {
+    "enabled": false,
+    "allow_live": false,
+    "risk_percent": 0.5,
+    "max_positions_per_symbol": 1,
+    "max_trades_per_day": 3,
+    "daily_loss_limit_percent": 2.0,
+    "max_slippage_points": 30
   }
 }

@@ -3,7 +3,7 @@
 ระบบช่วยเทรด XAUUSD / BTCUSD บน MT5 แนว ICT/SMC (ดูกราฟหลักใน TradingView)
 1. **ตัวสแกนสัญญาณ** อ่านราคาจาก MT5 แล้วแจ้งเข้า LINE (`scan.bat`)
 2. **หน้าเช็กกราฟ** ดูว่าระบบมองเห็นโครงสร้างอะไร (`run.bat`)
-3. บอทเทรดบัญชีทดลอง (กำลังทำ)
+3. **บอทเทรด** เข้าออเดอร์ตามสัญญาณบนบัญชี **Demo** (ปิดไว้เป็นค่าเริ่มต้น)
 
 ## กฎสัญญาณ v1 (ต้องครบทุกข้อ)
 1. ทิศทาง: โครงสร้าง H1 (BOS/CHoCH ล่าสุด) และ D1 ต้องไม่สวนทาง
@@ -15,6 +15,26 @@
 
 ตัวเลขปรับได้ในส่วน `"signals"` ของ `config.json` ทุกสัญญาณถูกบันทึกลง `signals.csv` เพื่อวัดความแม่นภายหลัง
 สัญญาณเป็นผลจากกฎอัตโนมัติ ใช้ประกอบการตัดสินใจเท่านั้น
+
+## เปิดบอทเทรด (บัญชี Demo)
+ใน `config.json` ส่วน `"trading"`:
+```json
+"trading": {
+  "enabled": true,
+  "allow_live": false,
+  "risk_percent": 0.5,
+  "max_positions_per_symbol": 1,
+  "max_trades_per_day": 3,
+  "daily_loss_limit_percent": 2.0,
+  "max_slippage_points": 30
+}
+```
+- `enabled` เปิด/ปิดการเข้าออเดอร์ (ปิด = แจ้ง LINE อย่างเดียว)
+- `allow_live` ต้องเป็น `false` ไว้ บอทจะเข้าออเดอร์เฉพาะบัญชี **Demo** ถ้าล็อกอินบัญชีจริงบอทจะไม่ยิงออเดอร์
+- `risk_percent` เสี่ยงกี่ % ของเงินต่อไม้ บอทคำนวณ lot จากระยะ SL ให้เอง
+- จำกัดไม้ต่อวัน, ออเดอร์ต่อสัญลักษณ์ และหยุดทั้งวันเมื่อขาดทุนถึง `daily_loss_limit_percent`
+- ทุกออเดอร์ตั้ง SL/TP ที่โบรกตั้งแต่ตอนเปิด บันทึกลง `trades.csv` และแจ้งผลเข้า LINE
+- ยังไม่มีระบบหลบข่าวแรง (CPI, NFP, FOMC) ช่วงข่าวแนะนำให้ปิด `scan.bat` ไว้ก่อน
 
 ## ตั้งค่า LINE (ทำครั้งเดียว)
 1. เข้า https://manager.line.biz สร้าง LINE Official Account (ฟรี)
@@ -63,7 +83,7 @@ python -m pytest
 - `server/datasource.py` ดึงแท่งเทียนจาก MT5 (หรือข้อมูลจำลอง)
 - `server/smc.py` คำนวณ swing, BOS/CHoCH, FVG, OB, premium/discount, kill zone
 - `server/app.py` เว็บเซิร์ฟเวอร์ + WebSocket ส่งข้อมูลทุก 1 วินาที
-- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที
+- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง
 - `web/` หน้ากราฟ (TradingView Lightweight Charts v4.1.3, Apache-2.0)
 
-> ตอนนี้ระบบแค่แจ้งสัญญาณ ยังไม่มีการส่งคำสั่งซื้อขาย
+> บอทเข้าออเดอร์เฉพาะบัญชี Demo จนกว่าจะผ่านการทดสอบ
