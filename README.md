@@ -33,6 +33,16 @@
 - ผลสรุปอยู่ใน `optimize_report.txt` และทุกชุดอยู่ใน `optimize_results.csv`
 - ถ้ามีชุดที่ผ่าน ระบบจะพิมพ์ค่าที่ใส่ใน `"signals"` ของ config.json ให้ แต่ต้องทดสอบบน Demo ต่ออีกก่อน
 
+## ตรวจความแม่นห้องซิก Telegram
+ดับเบิลคลิก `channel_check.bat` (เปิด MT5 ค้างไว้) ระบบจะอ่านหน้าเว็บสาธารณะของช่อง (t.me/s/ชื่อช่อง ไม่ต้องล็อกอิน Telegram) ย้อนหลัง 90 วัน
+แล้วเอาทุกซิกที่มี จุดเข้า/TP/SL ไปเทียบกับราคา M1 จริงจาก MT5
+- เข้าทันทีถ้าราคาอยู่ในโซนเข้าตอนโพสต์ ไม่งั้นรอราคามาถึงโซนไม่เกิน 4 ชม. (ถ้าวิ่งไป TP1 ก่อนนับว่าเข้าไม่ได้)
+- แท่งที่ชนทั้ง SL และ TP นับเป็นโดน SL ก่อน, หักสเปรด
+- สรุป: % ชน TP1/TP2/TP3 ก่อน SL, ผลเป็น R ถ้าปิดหมดที่ TP1 หรือแบ่งปิด 3 ส่วน
+- ผลอยู่ใน `channel_report.txt` และทุกซิกพร้อมลิงก์โพสต์ใน `channel_trades.csv`
+- ช่องอื่น: `channel_check.bat ชื่อช่อง --days 120`
+- ตรวจได้เฉพาะโพสต์ที่ยังไม่ถูกลบ
+
 ## เปิดบอทเทรด (บัญชี Demo)
 ใน `config.json` ส่วน `"trading"`:
 ```json
@@ -100,7 +110,7 @@ python -m pytest
 - `server/datasource.py` ดึงแท่งเทียนจาก MT5 (หรือข้อมูลจำลอง)
 - `server/smc.py` คำนวณ swing, BOS/CHoCH, FVG, OB, premium/discount, kill zone
 - `server/app.py` เว็บเซิร์ฟเวอร์ + WebSocket ส่งข้อมูลทุก 1 วินาที
-- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง, `server/backtest.py` ทดสอบย้อนหลัง, `server/optimize.py` เทียบหลายชุดกฎแบบ train/test
+- `server/signals.py` กฎหาสัญญาณ, `server/notify.py` ส่ง LINE, `server/scanner.py` วนสแกนทุก 30 วินาที, `server/executor.py` ส่งออเดอร์ + คุมความเสี่ยง, `server/backtest.py` ทดสอบย้อนหลัง, `server/optimize.py` เทียบหลายชุดกฎแบบ train/test, `server/channel_check.py` ตรวจห้องซิก Telegram
 - `web/` หน้ากราฟ (TradingView Lightweight Charts v4.1.3, Apache-2.0)
 
 > บอทเข้าออเดอร์เฉพาะบัญชี Demo จนกว่าจะผ่านการทดสอบ
