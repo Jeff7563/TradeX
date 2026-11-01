@@ -14,12 +14,14 @@ from pathlib import Path
 
 from .app import CFG, ROOT, SOURCE
 from .executor import Executor
+from .news import NewsFilter
 from .notify import Notifier, format_signal
 from .signals import evaluate
 
 LOG = ROOT / "signals.csv"
 SEEN = ROOT / "signals_seen.json"
 TRADES = ROOT / "trades.csv"
+NEWS_CACHE = ROOT / "news_cache.json"
 
 
 def log_signal(sig) -> None:
@@ -37,6 +39,28 @@ def load_seen() -> set:
         return set(json.loads(SEEN.read_text()))
     except (FileNotFoundError, ValueError):
         return set()
+
+
+def fmt_th(t: int) -> str:
+    tz = int(CFG.get("timezone_offset_hours", 7)) * 3600
+    return time.strftime("%d/%m %H:%M", time.gmtime(t + tz))
+
+
+def news_pause(news: NewsFilter | None, notifier: Notifier, told: set) -> bool:
+    """True while inside a news window. Tells LINE once per event."""
+    if not news:
+        return False
+    ev = news.blocking(time.time())
+    if not ev:
+        return False
+    key = f"{ev['time']}-{ev['title']}"
+    if key not in told:
+        told.add(key)
+        msg = (f"📰 หยุดหาสัญญาณช่วงข่าว {ev['country']} {ev['title']} ({fmt_th(ev['time'])}) "
+               f"ตั้งแต่ {news.cfg['minutes_before']} นาทีก่อน ถึง {news.cfg['minutes_after']} นาทีหลังข่าว")
+        print(msg, flush=True)
+        notifier.send(msg)
+    return True
 
 
 def scan_once(notifier: Notifier, seen: set, scfg: dict, executor: Executor | None = None) -> int:
@@ -93,10 +117,21 @@ def main() -> None:
             print(f"เทรดอัตโนมัติ: เปิด | เสี่ยง {executor.cfg['risk_percent']}% ต่อไม้ | "
                   f"สูงสุด {executor.cfg['max_trades_per_day']} ไม้/วัน | "
                   f"หยุดเมื่อขาดทุน {executor.cfg['daily_loss_limit_percent']}%/วัน", flush=True)
+    news = NewsFilter(CFG.get("news", {}), NEWS_CACHE)
+    if news.enabled:
+        news.refresh()
+        upcoming = [e for e in news.events if e["time"] > time.time()][:5]
+        print(f"หยุดช่วงข่าวแรง: เปิด | ข่าวที่จะถึง: "
+              + (", ".join(f"{fmt_th(e['time'])} {e['title']}" for e in upcoming) or "ไม่พบ"),
+              flush=True)
+    else:
+        news = None
+    told: set = set()
     seen = load_seen()
     every = int(scfg.get("scan_every_seconds", 30))
     while True:
-        scan_once(notifier, seen, scfg, executor)
+        if not news_pause(news, notifier, told):
+            scan_once(notifier, seen, scfg, executor)
         if args.once:
             break
         time.sleep(every)

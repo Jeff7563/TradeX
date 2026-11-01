@@ -30,6 +30,13 @@
     "channel_access_token": "",
     "user_id": ""
   },
+  "news": {
+    "enabled": true,
+    "currencies": ["USD"],
+    "impact": ["High"],
+    "minutes_before": 30,
+    "minutes_after": 30
+  },
   "trading": {
     "enabled": false,
     "allow_live": false,
