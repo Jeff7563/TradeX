@@ -11,3 +11,4 @@ optimize_results.csv
 optimize_report.txt
 channel_report.txt
 channel_trades.csv
+news_cache.json
